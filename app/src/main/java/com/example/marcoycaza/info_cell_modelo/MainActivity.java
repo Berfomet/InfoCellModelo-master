@@ -8,6 +8,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.telephony.CellInfo;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -20,15 +22,15 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     static final int PERMISSION_READ_STATE=1;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_main);
 
-        TextView textView = findViewById(R.id.textView);
+
+
+        setContentView(R.layout.activity_main);
 
         try {
             int permissionCheck =
@@ -54,14 +56,43 @@ public class MainActivity extends AppCompatActivity {
         try {
 
             List<CellInfo> cellList = telephonyManager.getAllCellInfo();
+            TextView tvTecnologia = findViewById(R.id.tvTecnologia);
 
-                CellInfoWcdma cellinfoWcdma =
-                        (CellInfoWcdma)telephonyManager.getAllCellInfo().get(0);
+            switch (getNetworkClass(telephonyManager.getNetworkType())) {
 
-                Integer cellSignalStrengthWcdma =
-                        cellinfoWcdma.getCellSignalStrength().getDbm();
+                case "2G":
 
-                return cellSignalStrengthWcdma.toString();
+                    CellInfoGsm cellInfoGsm =
+                            (CellInfoGsm) telephonyManager.getAllCellInfo().get(0);
+
+                    tvTecnologia.setText(tvTecnologia.getText().toString()+"Tecnología: GSM");
+
+                    return Integer.toString(cellInfoGsm.getCellSignalStrength().getDbm());
+
+                case "3G":
+
+                    CellInfoWcdma cellinfoWcdma =
+                            (CellInfoWcdma) telephonyManager.getAllCellInfo().get(0);
+                    tvTecnologia.setText(tvTecnologia.getText().toString()+"Tecnología: UMTS");
+
+                    return Integer.toString(cellinfoWcdma.getCellSignalStrength().getDbm());
+
+                case "4G":
+
+                    CellInfoLte cellInfoLte =
+                            (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
+
+                    tvTecnologia.setText("Tecnología: LTE");
+
+                    return Integer.toString(cellInfoLte.getCellSignalStrength().getDbm());
+
+                default:
+
+                    tvTecnologia.setText(tvTecnologia.getText().toString()+": No encontro compatibilidad");
+
+                    return null;
+
+            }
 
         } catch (Exception e) {
 
@@ -77,9 +108,39 @@ public class MainActivity extends AppCompatActivity {
         TelephonyManager telephonyManager =
                 (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
 
+        telephonyManager.getNetworkType();
+
         if (telephonyManager != null) {
-            TextView textView = findViewById(R.id.textView);
-            textView.setText(MyTelephonyManager(telephonyManager));
+            TextView tvPotencia = findViewById(R.id.tvPotencia);
+            tvPotencia.setText(tvPotencia.getText().toString()+": "+MyTelephonyManager(telephonyManager));
         }
     }
+
+    private String getNetworkClass(int networkType){
+
+        switch (networkType) {
+            case TelephonyManager.NETWORK_TYPE_GPRS:
+            case TelephonyManager.NETWORK_TYPE_EDGE:
+            case TelephonyManager.NETWORK_TYPE_CDMA:
+            case TelephonyManager.NETWORK_TYPE_1xRTT:
+            case TelephonyManager.NETWORK_TYPE_IDEN:
+                return "2G";
+            case TelephonyManager.NETWORK_TYPE_UMTS:
+            case TelephonyManager.NETWORK_TYPE_EVDO_0:
+            case TelephonyManager.NETWORK_TYPE_EVDO_A:
+            case TelephonyManager.NETWORK_TYPE_HSDPA:
+            case TelephonyManager.NETWORK_TYPE_HSUPA:
+            case TelephonyManager.NETWORK_TYPE_HSPA:
+            case TelephonyManager.NETWORK_TYPE_EVDO_B:
+            case TelephonyManager.NETWORK_TYPE_EHRPD:
+            case TelephonyManager.NETWORK_TYPE_HSPAP:
+                return "3G";
+            case TelephonyManager.NETWORK_TYPE_LTE:
+                return "4G";
+            default:
+                return "Unknown";
+        }
+
+    }
+
 }
